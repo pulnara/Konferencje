@@ -51,7 +51,6 @@ CREATE TABLE [Customers] (
   [AddressID] [int] NOT NULL FOREIGN KEY REFERENCES Address(AddressID),
   [Email] [nvarchar](50) NULL,
   [Phone] [nvarchar](20) NULL,
-  [IsCompany] [bit] DEFAULT 0 NOT NULL,
 );
 
 IF object_id ('dbo.PrivateCustomers', 'U') IS NOT NULL
@@ -147,22 +146,22 @@ CREATE TABLE [WorkshopReservations] (
 ALTER TABLE WorkshopReservations
 ADD CONSTRAINT CK_WNumReservations CHECK (NumReservations > 0);
 
-IF object_id ('dbo.ConferenceReservations', 'U') IS NOT NULL
-DROP TABLE ConferenceReservations
-CREATE TABLE [ConferenceReservations] (
-  [ConferenceReservationID] [int] NOT NULL PRIMARY KEY IDENTITY(1, 1),
+IF object_id ('dbo.ConferenceDayReservations', 'U') IS NOT NULL
+DROP TABLE ConferenceDayReservations
+CREATE TABLE [ConferenceDayReservations] (
+  [ConferenceDayReservationID] [int] NOT NULL PRIMARY KEY IDENTITY(1, 1),
   [ReservationID] [int] NOT NULL FOREIGN KEY REFERENCES Reservations(ReservationID),
-  [ConferenceID] [int] NOT NULL FOREIGN KEY REFERENCES Conferences(ConferenceID),
+  [ConferenceDayID] [int] NOT NULL FOREIGN KEY REFERENCES ConferenceDays(ConferenceDayID),
   [NumReservations] [int] NOT NULL,
 );
 
-ALTER TABLE ConferenceReservations
+ALTER TABLE ConferenceDayReservations
 ADD CONSTRAINT CK_CNumReservations CHECK (NumReservations > 0);
 
 IF object_id ('dbo.WorkshopRegistrations', 'U') IS NOT NULL
 DROP TABLE WorkshopRegistrations
 CREATE TABLE [WorkshopRegistrations] (
-  [ConferenceReservationID] [int] NOT NULL FOREIGN KEY REFERENCES ConferenceReservations(ConferenceReservationID),
+  [ConferenceReservationID] [int] NOT NULL FOREIGN KEY REFERENCES ConferenceDayReservations(ConferenceDayReservationID),
   [WorkshopReservationID] [int] NOT NULL FOREIGN KEY REFERENCES WorkshopReservations(WorkshopReservationID),
   [AttendeeID] [int] NOT NULL FOREIGN KEY REFERENCES Attendees(AttendeeID),
 );
@@ -170,7 +169,7 @@ CREATE TABLE [WorkshopRegistrations] (
 IF object_id ('dbo.ConferenceRegistrations', 'U') IS NOT NULL
 DROP TABLE ConferenceRegistrations
 CREATE TABLE [ConferenceRegistrations] (
-  [ConferenceReservationID] [int] NOT NULL FOREIGN KEY REFERENCES ConferenceReservations(ConferenceReservationID),
+  [ConferenceReservationID] [int] NOT NULL FOREIGN KEY REFERENCES ConferenceDayReservations(ConferenceDayReservationID),
   [AttendeeID] [int] NOT NULL FOREIGN KEY REFERENCES Attendees(AttendeeID),
 );
 
