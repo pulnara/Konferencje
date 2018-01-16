@@ -486,7 +486,7 @@ Version:4.0.1.1398-->
           <Fields type="List&lt;string&gt;" version="1">
             <value type="string">WorksForID</value>
           </Fields>
-          <ForeignKeyFillMethod>RepeatForever</ForeignKeyFillMethod>
+          <ForeignKeyFillMethod>Unique</ForeignKeyFillMethod>
           <MaxBuckets>1000</MaxBuckets>
           <Seed>0</Seed>
           <MinRepeats>1</MinRepeats>
@@ -675,7 +675,7 @@ Version:4.0.1.1398-->
           <Fields type="List&lt;string&gt;" version="1">
             <value type="string">CustomerID</value>
           </Fields>
-          <ForeignKeyFillMethod>RepeatForever</ForeignKeyFillMethod>
+          <ForeignKeyFillMethod>Unique</ForeignKeyFillMethod>
           <MaxBuckets>1000</MaxBuckets>
           <Seed>0</Seed>
           <MinRepeats>1</MinRepeats>
