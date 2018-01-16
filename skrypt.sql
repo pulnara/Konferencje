@@ -1,9 +1,9 @@
-use master
-if exists(select * from sys.databases where name = 'Konferencje')
-drop database Konferencje
-create database Konferencje
+USE master
+IF exists(select * from sys.databases where name = 'Konferencje')
+DROP DATABASE Konferencje
+CREATE DATABASE Konferencje
 
-use Konferencje
+USE Konferencje
 
 IF object_id ('dbo.Address', 'U') IS NOT NULL
 DROP TABLE Address
