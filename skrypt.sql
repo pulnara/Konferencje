@@ -172,7 +172,40 @@ CREATE TABLE [ConferenceRegistrations] (
   [AttendeeID] [int] NOT NULL FOREIGN KEY REFERENCES Attendees(AttendeeID),
 );
 
+GO
+CREATE VIEW v_ReservationsToCancel
+AS
+SELECT r.ReservationID, r.CustomerID FROM Reservations r
+LEFT JOIN Payments p
+ON p.PaymentID = r.PaymentID
+WHERE r.PaymentID IS NULL OR DATEDIFF(DAY, r.Date, p.Date) > 7
+GROUP BY r.CustomerID, r.ReservationID
 
+GO
+CREATE VIEW v_UpcomingConferences
+AS
+SELECT c.ConferenceName, c.StartDate, c.EndDate, a.City, SUM(cd.ParticipantsLimit) AS 'Participants Limit', SUM(cdr.NumReservations) AS 'Participants No' FROM dbo.Conferences c
+INNER JOIN dbo.Address a
+ON a.AddressID = c.LocationID
+INNER JOIN dbo.ConferenceDays cd
+ON cd.ConferenceID = c.ConferenceID
+INNER JOIN dbo.ConferenceDayReservations cdr
+ON cdr.ConferenceDayID = cd.ConferenceDayID
+WHERE c.EndDate >= GETDATE()
+GROUP BY c.ConferenceName, c.StartDate, c.EndDate, a.City
+
+GO
+CREATE VIEW v_UpcomingConferencesParticipants
+AS
+SELECT a.Firstname, a.Lastname, (SELECT CompanyName FROM dbo.Companies WHERE CustomerID = a.WorksForID) AS CompanyName, c.ConferenceName FROM dbo.Attendees a
+INNER JOIN dbo.ConferenceRegistrations cr
+ON cr.AttendeeID = a.AttendeeID
+INNER JOIN dbo.ConferenceDayReservations cdr
+ON cdr.ConferenceDayReservationID = cr.ConferenceReservationID
+INNER JOIN dbo.ConferenceDays cd
+ON cd.ConferenceDayID = cdr.ConferenceDayID
+INNER JOIN dbo.Conferences c
+ON c.ConferenceID = cd.ConferenceID
 
 
 
