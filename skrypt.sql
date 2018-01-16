@@ -88,13 +88,13 @@ CREATE TABLE [ConferenceDays] (
   [ConferenceDayID] [int] NOT NULL PRIMARY KEY IDENTITY (1, 1),
   [ConferenceID] [int] NOT NULL FOREIGN KEY REFERENCES Conferences(ConferenceID),
   [Day] [int] NOT NULL,
-  [MaxParticipants] [int] NOT NULL,
+  [ParticipantsLimit] [int] NOT NULL,
 );
 
 ALTER TABLE ConferenceDays
 ADD CONSTRAINT CK_DayNo CHECK (Day > 0);
 ALTER TABLE ConferenceDays
-ADD CONSTRAINT CK_MaxParticipants CHECK (MaxParticipants > 0);
+ADD CONSTRAINT CK_ParticipantsLimit CHECK (ParticipantsLimit > 0);
 
 IF object_id ('dbo.Workshops', 'U') IS NOT NULL
 DROP TABLE Workshops
@@ -130,7 +130,6 @@ CREATE TABLE [Reservations] (
   [ReservationID] [int] NOT NULL PRIMARY KEY IDENTITY(1, 1),
   [CustomerID] [int] NOT NULL FOREIGN KEY REFERENCES Customers(CustomerID),
   [PaymentID] [int] NULL FOREIGN KEY REFERENCES Payments(PaymentID),
-  [IsCancelled] [bit] DEFAULT 0 NOT NULL,
   [Date] [datetime] NOT NULL,
 );
 
