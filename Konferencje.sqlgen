@@ -956,7 +956,7 @@ Version:4.0.1.1398-->
           </Generator>
         </value>
         <value version="1" type="SDGField">
-          <Name>MaxParticipants</Name>
+          <Name>ParticipantsLimit</Name>
           <FieldType>Generated</FieldType>
           <PrimaryKey>False</PrimaryKey>
           <ForeignKey>False</ForeignKey>
@@ -986,7 +986,7 @@ Version:4.0.1.1398-->
               </element>
               <element>
                 <key type="string">MinValue</key>
-                <value type="string">150</value>
+                <value type="string">200</value>
               </element>
               <element>
                 <key type="string">MaxValue</key>
@@ -1006,7 +1006,7 @@ Version:4.0.1.1398-->
               </element>
               <element>
                 <key type="string">Seed</key>
-                <value type="string">4099</value>
+                <value type="string">4100</value>
               </element>
             </GeneratorProperties>
           </Generator>
@@ -1161,22 +1161,22 @@ Version:4.0.1.1398-->
           <Scale>0</Scale>
           <DefinedSize>50</DefinedSize>
           <Generator version="1" type="GeneratorDetails">
-            <GeneratorTypeName>RedGate.SQLDataGenerator.ExpressionGenerators.Regexp.RegexpGenerator</GeneratorTypeName>
-            <DisplayName>Nick Name</DisplayName>
-            <Description>Mike124, Chris1, Tom78, Jenny39, Amy12, Mel54...</Description>
-            <CategoryName>Personal</CategoryName>
+            <GeneratorTypeName>RedGate.SQLDataGenerator.DescriptionGenerators.TextGenerator</GeneratorTypeName>
+            <DisplayName>Text Shuffler</DisplayName>
+            <Description>Shuffles word blocks</Description>
+            <CategoryName>Generic</CategoryName>
             <GeneratorProperties type="Dictionary&lt;string, object&gt;" version="1">
               <element>
-                <key type="string">Expression</key>
-                <value type="string">($"NamesFirst.txt")[0-9]{0,3}</value>
+                <key type="string">InputText</key>
+                <value type="string">Sewing Green Game Of Throne Justice Law Land Meat And Animals Fauna Flora Manufacturing Writing Purple Eco Author Speech Music Family Life Writer Speed Development Game Programming Adhesive Gun Measuring Scale Friends Children Upbringing Farmhouse Grinding Hen Hog Potato And Slaughterhouse Harrow Cultivator Plough And Comprehensive Tools Design Designing Shawshank Prison Cells End Quitting Ending Finishing Starting Joining Your Potential Motivation Motivating Yourself Dance Dancing Java C++ Python Computer Programming Tomato Killing Beginning Banana Apple Pear Peach Juice Kitchen Sleeping Scandinavian Jysk Scala JavaScript Lisp Ruby Fish C Assembly Haskell UML SML Elixir Data Science Big Fortran Icon Your Future Past Animating Planner Gorilla Glass Ceiling Database PHP SQL Swift C# Analysing Barking Baking Pies Casablanca Vincent Van Redemption Singing Increasing Potential Our World Blowing Burning Being Studying University Opportunities Obstacles In Yoda Vader KyloRen Anakin Jabba Luke Leia Han Solo Beast Broadening Beating Buying Online Can Change Changing Checking Choosing Closing Climbing Considering My Devotion Dreaming Dressling Like Popstar Dropping Dividing Earning Estimate Explaining Fighting Feeling Getting Healing Kepping Killing Losing Learning Leading Meaning Making Own Removing Selling Shutting Shooting Spelling Travelling Europe Asia USA America Africa Australia Leaving Walking Working Wishing Writing Rey Admiral Ackbar Jar Binks </value>
               </element>
               <element>
-                <key type="string">Unique</key>
-                <value type="string">False</value>
+                <key type="string">MinLen</key>
+                <value type="string">12</value>
               </element>
               <element>
-                <key type="string">Seed</key>
-                <value type="string">6145</value>
+                <key type="string">MaxLen</key>
+                <value type="string">50</value>
               </element>
               <element>
                 <key type="string">NullsAllowed</key>
@@ -1187,8 +1187,8 @@ Version:4.0.1.1398-->
                 <value type="string">0,01</value>
               </element>
               <element>
-                <key type="string">UseSequence</key>
-                <value type="string">False</value>
+                <key type="string">Seed</key>
+                <value type="string">6145</value>
               </element>
             </GeneratorProperties>
           </Generator>
@@ -2163,53 +2163,6 @@ Version:4.0.1.1398-->
               <element>
                 <key type="string">Unique</key>
                 <value type="string">False</value>
-              </element>
-            </GeneratorProperties>
-          </Generator>
-        </value>
-        <value version="1" type="SDGField">
-          <Name>IsCancelled</Name>
-          <FieldType>Generated</FieldType>
-          <PrimaryKey>False</PrimaryKey>
-          <ForeignKey>False</ForeignKey>
-          <Unique>False</Unique>
-          <AllowsNulls>False</AllowsNulls>
-          <SqlType>Boolean</SqlType>
-          <Precision>1</Precision>
-          <Scale>0</Scale>
-          <DefinedSize>1</DefinedSize>
-          <Generator version="1" type="GeneratorDetails">
-            <GeneratorTypeName>RedGate.SQLDataGenerator.Generators.List.WeightedListGenerator</GeneratorTypeName>
-            <DisplayName>Bit Weighted List</DisplayName>
-            <Description>TRUE or FALSE (even distribution)</Description>
-            <CategoryName>Personal</CategoryName>
-            <GeneratorProperties type="Dictionary&lt;string, object&gt;" version="1">
-              <element>
-                <key type="string">ListItems</key>
-                <value version="1" type="WeightedListItems">
-                  <WeightedListOfItems type="WeightedListOfItems" version="1">
-                    <value version="1" type="WeightedListItem">
-                      <Name>True</Name>
-                      <Weight>5</Weight>
-                    </value>
-                    <value version="1" type="WeightedListItem">
-                      <Name>False</Name>
-                      <Weight>80</Weight>
-                    </value>
-                  </WeightedListOfItems>
-                </value>
-              </element>
-              <element>
-                <key type="string">NullsAllowed</key>
-                <value type="string">False</value>
-              </element>
-              <element>
-                <key type="string">NullProportion</key>
-                <value type="string">0,01</value>
-              </element>
-              <element>
-                <key type="string">Seed</key>
-                <value type="string">11267</value>
               </element>
             </GeneratorProperties>
           </Generator>
