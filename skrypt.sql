@@ -161,15 +161,15 @@ ADD CONSTRAINT CK_CNumReservations CHECK (NumReservations > 0);
 IF object_id ('dbo.WorkshopRegistrations', 'U') IS NOT NULL
 DROP TABLE WorkshopRegistrations
 CREATE TABLE [WorkshopRegistrations] (
-  [ConferenceReservationID] [int] NOT NULL FOREIGN KEY REFERENCES ConferenceDayReservations(ConferenceDayReservationID),
+  [ConferenceDayReservationID] [int] NOT NULL FOREIGN KEY REFERENCES ConferenceDayReservations(ConferenceDayReservationID),
   [WorkshopReservationID] [int] NOT NULL FOREIGN KEY REFERENCES WorkshopReservations(WorkshopReservationID),
   [AttendeeID] [int] NOT NULL FOREIGN KEY REFERENCES Attendees(AttendeeID),
 );
 
-IF object_id ('dbo.ConferenceRegistrations', 'U') IS NOT NULL
-DROP TABLE ConferenceRegistrations
-CREATE TABLE [ConferenceRegistrations] (
-  [ConferenceReservationID] [int] NOT NULL FOREIGN KEY REFERENCES ConferenceDayReservations(ConferenceDayReservationID),
+IF object_id ('dbo.ConferenceDayRegistrations', 'U') IS NOT NULL
+DROP TABLE ConferenceDayRegistrations
+CREATE TABLE [ConferenceDayRegistrations] (
+  [ConferenceDayReservationID] [int] NOT NULL FOREIGN KEY REFERENCES ConferenceDayReservations(ConferenceDayReservationID),
   [AttendeeID] [int] NOT NULL FOREIGN KEY REFERENCES Attendees(AttendeeID),
 );
 
@@ -199,10 +199,10 @@ GO
 CREATE VIEW v_UpcomingConferencesParticipants
 AS
 SELECT a.Firstname, a.Lastname, (SELECT CompanyName FROM dbo.Companies WHERE CustomerID = a.WorksForID) AS CompanyName, c.ConferenceName FROM dbo.Attendees a
-INNER JOIN dbo.ConferenceRegistrations cr
+INNER JOIN dbo.ConferenceDayRegistrations cr
 ON cr.AttendeeID = a.AttendeeID
 INNER JOIN dbo.ConferenceDayReservations cdr
-ON cdr.ConferenceDayReservationID = cr.ConferenceReservationID
+ON cdr.ConferenceDayReservationID = cr.ConferenceDayReservationID
 INNER JOIN dbo.ConferenceDays cd
 ON cd.ConferenceDayID = cdr.ConferenceDayID
 INNER JOIN dbo.Conferences c
