@@ -49,7 +49,7 @@ DROP TABLE Customers
 CREATE TABLE [Customers] (
   [CustomerID] [int] NOT NULL PRIMARY KEY IDENTITY (1,1),
   [AddressID] [int] NOT NULL FOREIGN KEY REFERENCES Address(AddressID),
-  [Email] [nvarchar](50) NULL,
+  [Email] [nvarchar](50) NOT NULL UNIQUE CHECK([Email] like '%_@_%_.__%'),
   [Phone] [nvarchar](20) NULL,
 );
 
@@ -76,7 +76,7 @@ CREATE TABLE [Attendees] (
   [AttendeeID] [int] NOT NULL PRIMARY KEY IDENTITY (1,1),
   [Firstname] [nvarchar](30) NOT NULL,
   [Lastname] [nvarchar](30) NOT NULL,
-  [Email] [nvarchar](50) NULL,
+  [Email] [nvarchar](50) NOT NULL UNIQUE CHECK([Email] like '%_@_%_.__%'),
   [Phone] [nvarchar](20) NULL,
   [StudentCard] [nvarchar](20) NULL,
   [WorksForID] [int] NULL FOREIGN KEY REFERENCES Customers(CustomerID),
@@ -120,8 +120,8 @@ IF object_id ('dbo.Payments', 'U') IS NOT NULL
 DROP TABLE Payments
 CREATE TABLE [Payments] (
   [PaymentID] [int] NOT NULL PRIMARY KEY IDENTITY(1, 1),
-  [Value] [money] NOT NULL,
-  [Date] [datetime] NOT NULL,
+  [Value] [money] NOT NULL CHECK([Value] > 0),
+  [Date] [datetime] NOT NULL DEFAULT GETDATE(),
 );
 
 IF object_id ('dbo.Reservations', 'U') IS NOT NULL
@@ -130,7 +130,7 @@ CREATE TABLE [Reservations] (
   [ReservationID] [int] NOT NULL PRIMARY KEY IDENTITY(1, 1),
   [CustomerID] [int] NOT NULL FOREIGN KEY REFERENCES Customers(CustomerID),
   [PaymentID] [int] NULL FOREIGN KEY REFERENCES Payments(PaymentID),
-  [Date] [datetime] NOT NULL,
+  [Date] [datetime] NOT NULL DEFAULT GETDATE(),
   [IsCancelled] [BIT] NOT NULL DEFAULT 0,
 );
 
