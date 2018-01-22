@@ -1,3 +1,600 @@
+USE master
+IF exists(select * from sys.databases where name = 'Konferencje')
+DROP DATABASE Konferencje
+CREATE DATABASE Konferencje
+
+USE Konferencje
+
+IF object_id ('dbo.Address', 'U') IS NOT NULL
+DROP TABLE Address
+CREATE TABLE [Address] (
+  [AddressID] [int] NOT NULL PRIMARY KEY IDENTITY (1,1),
+  [Street] [nvarchar](50) NULL,
+  [City] [nvarchar](50) NULL,
+  [ZIP] [nvarchar](10) NULL,
+  [Country] [nvarchar](30) NULL,
+  );
+
+IF object_id ('dbo.Conferences', 'U') IS NOT NULL
+DROP TABLE Conferences
+CREATE TABLE [Conferences] (
+  [ConferenceID] [int] NOT NULL PRIMARY KEY IDENTITY (1,1),
+  [ConferenceName] [nvarchar](50) NOT NULL,
+  [StartDate] [date] NOT NULL,
+  [EndDate] [date] NOT NULL,
+  [LocationID] [int] NOT NULL FOREIGN KEY REFERENCES Address(AddressID),
+  [StudentDiscount] [int] NULL,
+);
+
+ALTER TABLE Conferences
+ADD CONSTRAINT CK_StudentDiscount CHECK (StudentDiscount >= 0 AND StudentDiscount <= 100);
+ALTER TABLE Conferences
+ADD CONSTRAINT CK_Days CHECK (StartDate < EndDate);
+
+IF object_id ('dbo.Prices', 'U') IS NOT NULL
+DROP TABLE Prices
+CREATE TABLE [Prices] (
+  [ConferenceID] [int] NOT NULL FOREIGN KEY REFERENCES Conferences(ConferenceID),
+  [DaysBeforeStart] [int] NOT NULL,
+  [Price] [money] NOT NULL,
+);
+
+ALTER TABLE Prices
+ADD CONSTRAINT CK_Price CHECK (Price > 0);
+ALTER TABLE Prices
+ADD CONSTRAINT CK_DaysBeforeStart CHECK (DaysBeforeStart >= 0);
+
+IF object_id ('dbo.Customers', 'U') IS NOT NULL
+DROP TABLE Customers
+CREATE TABLE [Customers] (
+  [CustomerID] [int] NOT NULL PRIMARY KEY IDENTITY (1,1),
+  [AddressID] [int] NOT NULL FOREIGN KEY REFERENCES Address(AddressID),
+  [Email] [nvarchar](50) NOT NULL UNIQUE CHECK([Email] like '%_@_%_.__%'),
+  [Phone] [nvarchar](20) NULL,
+);
+
+IF object_id ('dbo.PrivateCustomers', 'U') IS NOT NULL
+DROP TABLE PrivateCustomers
+CREATE TABLE [PrivateCustomers] (
+  [CustomerID] [int] NOT NULL FOREIGN KEY REFERENCES Customers(CustomerID),
+  [Firstname] [nvarchar](30) NOT NULL,
+  [Lastname] [nvarchar](30) NOT NULL,
+);
+
+IF object_id ('dbo.Companies', 'U') IS NOT NULL
+DROP TABLE Companies
+CREATE TABLE [Companies] (
+  [CustomerID] [int] NOT NULL FOREIGN KEY REFERENCES Customers(CustomerID),
+  [CompanyName] [nvarchar](50) NOT NULL,
+  [ContactName] [nvarchar](30) NOT NULL,
+  [NIP] [nchar](10) UNIQUE NOT NULL,
+);
+
+IF object_id ('dbo.Attendees', 'U') IS NOT NULL
+DROP TABLE Attendees
+CREATE TABLE [Attendees] (
+  [AttendeeID] [int] NOT NULL PRIMARY KEY IDENTITY (1,1),
+  [Firstname] [nvarchar](30) NOT NULL,
+  [Lastname] [nvarchar](30) NOT NULL,
+  [Email] [nvarchar](50) NOT NULL UNIQUE CHECK([Email] like '%_@_%_.__%'),
+  [Phone] [nvarchar](20) NULL,
+  [StudentCard] [nvarchar](20) NULL,
+  [WorksForID] [int] NULL FOREIGN KEY REFERENCES Customers(CustomerID),
+);
+
+IF object_id ('dbo.ConferenceDays', 'U') IS NOT NULL
+DROP TABLE ConferenceDays
+CREATE TABLE [ConferenceDays] (
+  [ConferenceDayID] [int] NOT NULL PRIMARY KEY IDENTITY (1, 1),
+  [ConferenceID] [int] NOT NULL FOREIGN KEY REFERENCES Conferences(ConferenceID),
+  [Day] [int] NOT NULL,
+  [ParticipantsLimit] [int] NOT NULL,
+);
+
+ALTER TABLE ConferenceDays
+ADD CONSTRAINT CK_DayNo CHECK (Day > 0);
+ALTER TABLE ConferenceDays
+ADD CONSTRAINT CK_ParticipantsLimit CHECK (ParticipantsLimit > 0);
+
+IF object_id ('dbo.Workshops', 'U') IS NOT NULL
+DROP TABLE Workshops
+CREATE TABLE [Workshops] (
+  [WorkshopID] [int] NOT NULL PRIMARY KEY IDENTITY (1, 1),
+  [Name] [nvarchar](50) NOT NULL,
+  [ConferenceDayID] [int] FOREIGN KEY REFERENCES ConferenceDays(ConferenceDayID),
+  [StartTime] [datetime] NOT NULL,
+  [EndTime] [datetime] NOT NULL,
+  [Location] [nvarchar](50) NULL,
+  [Price] [money] NOT NULL,
+  [ParticipantsLimit] [int] NOT NULL,
+);
+
+ALTER TABLE Workshops
+ADD CONSTRAINT CK_Times CHECK (StartTime < EndTime);
+ALTER TABLE Workshops
+ADD CONSTRAINT CK_WPrice CHECK (Price >= 0);
+ALTER TABLE Workshops
+ADD CONSTRAINT CK_WParticipantsLimit CHECK (ParticipantsLimit > 0);
+
+IF object_id ('dbo.Payments', 'U') IS NOT NULL
+DROP TABLE Payments
+CREATE TABLE [Payments] (
+  [PaymentID] [int] NOT NULL PRIMARY KEY IDENTITY(1, 1),
+  [Value] [money] NOT NULL CHECK([Value] >= 0),
+  [Date] [date] NOT NULL DEFAULT GETDATE(),
+);
+
+IF object_id ('dbo.Reservations', 'U') IS NOT NULL
+DROP TABLE Reservations
+CREATE TABLE [Reservations] (
+  [ReservationID] [int] NOT NULL PRIMARY KEY IDENTITY(1, 1),
+  [CustomerID] [int] NOT NULL FOREIGN KEY REFERENCES Customers(CustomerID),
+  [PaymentID] [int] NULL FOREIGN KEY REFERENCES Payments(PaymentID),
+  [Date] [datetime] NOT NULL DEFAULT GETDATE(),
+  [IsCancelled] [BIT] NOT NULL DEFAULT 0,
+);
+
+IF object_id ('dbo.WorkshopReservations', 'U') IS NOT NULL
+DROP TABLE WorkshopReservations
+CREATE TABLE [WorkshopReservations] (
+  [WorkshopReservationID] [int] NOT NULL PRIMARY KEY IDENTITY(1, 1),
+  [ReservationID] [int] NOT NULL FOREIGN KEY REFERENCES Reservations(ReservationID),
+  [WorkshopID] [int] NOT NULL FOREIGN KEY REFERENCES Workshops(WorkshopID),
+  [NumReservations] [int] NOT NULL,
+);
+
+ALTER TABLE WorkshopReservations
+ADD CONSTRAINT CK_WNumReservations CHECK (NumReservations > 0);
+
+IF object_id ('dbo.ConferenceDayReservations', 'U') IS NOT NULL
+DROP TABLE ConferenceDayReservations
+CREATE TABLE [ConferenceDayReservations] (
+  [ConferenceDayReservationID] [int] NOT NULL PRIMARY KEY IDENTITY(1, 1),
+  [ReservationID] [int] NOT NULL FOREIGN KEY REFERENCES Reservations(ReservationID),
+  [ConferenceDayID] [int] NOT NULL FOREIGN KEY REFERENCES ConferenceDays(ConferenceDayID),
+  [NumReservations] [int] NOT NULL,
+);
+
+ALTER TABLE ConferenceDayReservations
+ADD CONSTRAINT CK_CNumReservations CHECK (NumReservations > 0);
+
+IF object_id ('dbo.WorkshopRegistrations', 'U') IS NOT NULL
+DROP TABLE WorkshopRegistrations
+CREATE TABLE [WorkshopRegistrations] (
+  [ConferenceDayReservationID] [int] NOT NULL FOREIGN KEY REFERENCES ConferenceDayReservations(ConferenceDayReservationID),
+  [WorkshopReservationID] [int] NOT NULL FOREIGN KEY REFERENCES WorkshopReservations(WorkshopReservationID),
+  [AttendeeID] [int] NOT NULL FOREIGN KEY REFERENCES Attendees(AttendeeID),
+);
+
+IF object_id ('dbo.ConferenceDayRegistrations', 'U') IS NOT NULL
+DROP TABLE ConferenceDayRegistrations
+CREATE TABLE [ConferenceDayRegistrations] (
+  [ConferenceDayReservationID] [int] NOT NULL FOREIGN KEY REFERENCES ConferenceDayReservations(ConferenceDayReservationID),
+  [AttendeeID] [int] NOT NULL FOREIGN KEY REFERENCES Attendees(AttendeeID),
+);
+
+GO
+CREATE VIEW v_ReservationsToCancel
+AS
+SELECT r.ReservationID, r.CustomerID FROM Reservations r
+LEFT JOIN Payments p
+ON p.PaymentID = r.PaymentID
+WHERE IsCancelled = 0 AND (r.PaymentID IS NULL OR DATEDIFF(DAY, r.Date, p.Date) > 7)
+GROUP BY r.CustomerID, r.ReservationID
+
+GO
+CREATE VIEW v_UpcomingConferences
+AS
+SELECT c.ConferenceName, cd.Day AS Day, DATEADD(DAY, cd.Day - 1, c.StartDate) AS Begins, a.City, cd.ParticipantsLimit AS 'Participants Limit', SUM(cdr.NumReservations) AS 'Participants No' FROM dbo.Conferences c
+INNER JOIN dbo.Address a
+ON a.AddressID = c.LocationID
+INNER JOIN dbo.ConferenceDays cd
+ON cd.ConferenceID = c.ConferenceID
+INNER JOIN dbo.ConferenceDayReservations cdr
+ON cdr.ConferenceDayID = cd.ConferenceDayID
+WHERE c.EndDate >= GETDATE()
+GROUP BY c.ConferenceName, cd.Day, c.StartDate, c.EndDate, a.City, cd.ParticipantsLimit
+
+
+GO
+CREATE VIEW v_UpcomingConferencesParticipants
+AS
+SELECT a.Firstname, a.Lastname, (SELECT CompanyName FROM dbo.Companies WHERE CustomerID = a.WorksForID) AS CompanyName, c.ConferenceName FROM dbo.Attendees a
+INNER JOIN dbo.ConferenceDayRegistrations cr
+ON cr.AttendeeID = a.AttendeeID
+INNER JOIN dbo.ConferenceDayReservations cdr
+ON cdr.ConferenceDayReservationID = cr.ConferenceDayReservationID
+INNER JOIN dbo.ConferenceDays cd
+ON cd.ConferenceDayID = cdr.ConferenceDayID
+INNER JOIN dbo.Conferences c
+ON c.ConferenceID = cd.ConferenceID
+
+GO
+CREATE PROC p_AddConference
+  @ConferenceName NVARCHAR(50), @StartDate DATE, @EndDate DATE, @LocationID INT, @StudentDiscount INT 
+AS
+BEGIN
+  SET NOCOUNT ON;
+  INSERT INTO dbo.Conferences(ConferenceName, StartDate, EndDate, LocationID, StudentDiscount)
+  VALUES (@ConferenceName, @StartDate, @EndDate, @LocationID, @StudentDiscount)
+END
+
+GO
+CREATE PROC p_AddCustomer
+	@Email NVARCHAR(50), @Phone NVARCHAR(20), @AddressID int
+AS
+BEGIN
+	SET NOCOUNT ON;
+	INSERT INTO dbo.Customers(AddressID, Email, Phone) 
+	VALUES (@AddressID, @Email, @Phone);
+END
+
+GO
+create view  v_CustomerstoContact
+as
+select distinct c.CustomerID,c.Email,c.Phone
+from Customers c
+inner join Reservations res
+on (c.CustomerID = res.CustomerID and res.isCancelled!=0)
+inner join ConferenceDayReservations cdres
+on res.ReservationID = cdres.ReservationID
+inner join ConferenceDays cd
+on cd.ConferenceDayID = cdres.ConferenceDayID
+inner join Conferences con
+on (con.ConferenceID = cd.ConferenceID and datediff(day,getdate(),con.StartDate)<14)
+inner join ConferenceDayRegistrations cdr
+on cdr.ConferenceDayReservationID = cdres.ConferenceDayReservationID 
+where ((select count(*) from ConferenceDayRegistrations
+where ConferenceDayReservationID=cdres.ConferenceDayReservationID)-NumReservations<0)
+
+GO
+create view v_WorkshopsPopularity
+as
+select ConferenceName,Name,sum(NumReservations) as NumberOfReservations
+from Conferences c inner join ConferenceDays cd
+on c.ConferenceID = cd.ConferenceID
+inner join Workshops w
+on w.ConferenceDayID = cd.ConferenceDayID
+inner join WorkshopReservations wres
+on wres.WorkshopID = w.WorkshopID
+inner join Reservations r
+on wres.ReservationID = r.ReservationID and r.IsCancelled = 0
+group by c.ConferenceID,ConferenceName,w.WorkshopID,w.Name
+
+GO
+create view v_MostPopularWorkshops
+as
+select * from v_WorkshopsPopularity as v1
+where NumberOfReservations>=all(select NumberOfReservations from v_WorkshopsPopularity as v2
+where v1.ConferenceName = v2.ConferenceName)
+
+GO
+create view v_AvailableConfDays 
+as
+select c.ConferenceName,cd.Day,(ParticipantsLimit - sum(NumReservations)) as PlacesLeft
+from ConferenceDays cd inner join ConferenceDayReservations cdres
+on cd.ConferenceDayID=cdres.ConferenceDayID inner join Conferences c
+on c.ConferenceID = cd.ConferenceID and c.StartDate>getdate()
+group by c.ConferenceName,cd.ConferenceDayID,cd.ParticipantsLimit,Day
+having (ParticipantsLimit - sum(NumReservations))>0
+
+GO
+create view v_AvailableWorkshops 
+as
+select c.ConferenceName,w.Name,(w.ParticipantsLimit - sum(wres.NumReservations)) as PlacesLeft
+from Workshops w inner join WorkshopReservations wres
+on w.WorkshopID=wres.WorkshopID inner join Conferencedays cd
+on w.ConferencedayID = cd.ConferenceDayID inner join Conferences c
+on cd.ConferenceID = c.ConferenceID and c.StartDate>getdate() 
+group by c.ConferenceName,w.Name,w.ParticipantsLimit
+having (w.ParticipantsLimit - sum(NumReservations))>0
+
+GO
+create view v_NumberOfWorkshopsParticipated
+as
+select a.AttendeeID,a.Firstname,a.Lastname,count(*) as NumberOfWorkshops
+from Attendees a inner join WorkshopRegistrations wr
+on a.AttendeeID = wr.AttendeeID
+group by a.AttendeeID,a.Firstname,a.Lastname
+select top 10 * from v_NumberOfWorkshopsParticipated
+
+GO
+CREATE PROC p_AddCompanyToCustomer
+	@CompanyName NVARCHAR(50), @ContactName NVARCHAR(30), @NIP NCHAR(10), @CustomerID int
+AS
+BEGIN
+	SET NOCOUNT ON;
+	INSERT INTO dbo.Companies(CustomerID, CompanyName, ContactName, NIP)
+	VALUES (@CustomerID, @CompanyName, @ContactName, @NIP)
+END
+
+GO
+CREATE PROC p_AddPrivateCustomerToCustomer
+	@FirstName NVARCHAR(30), @LastName NVARCHAR(30), @CustomerID int
+AS
+BEGIN
+	SET NOCOUNT ON;
+	INSERT INTO dbo.PrivateCustomers(CustomerID, Firstname, Lastname)
+	VALUES (@CustomerID, @FirstName, @LastName)
+END
+
+GO
+CREATE TRIGGER t_AddingPrivateCustomerToCustomer ON dbo.PrivateCustomers
+FOR INSERT
+AS
+BEGIN
+	SET NOCOUNT ON;
+	DECLARE @CustomerID int
+	SET @CustomerID = (SELECT CustomerID FROM Inserted) 
+	IF EXISTS(SELECT CustomerID FROM dbo.Companies WHERE CustomerID = @CustomerID)
+	BEGIN
+		RAISERROR('You cannot assign private customer to a customer who is a company', 16, 1)
+		ROLLBACK TRANSACTION
+	END
+END
+
+GO
+CREATE TRIGGER t_AddingReservationForOutOfDateWorkshop ON dbo.WorkshopReservations
+FOR INSERT 
+AS
+BEGIN
+	SET NOCOUNT ON;
+	DECLARE @ReservationDate DATE
+	DECLARE @WorkshopDate DATE
+	DECLARE @ReservationID INT 
+	DECLARE @WorkshopID INT 
+
+	SET @ReservationID = (SELECT ReservationID FROM Inserted)
+	SET @WorkshopID = (SELECT WorkshopID FROM Inserted)
+	SET @ReservationDate = (SELECT Date FROM dbo.Reservations WHERE ReservationID = @ReservationID)
+	SET @WorkshopDate = (SELECT StartTime FROM dbo.Workshops WHERE WorkshopID = @WorkshopID)
+
+	IF (@ReservationDate > @WorkshopDate)
+	BEGIN
+		RAISERROR('You cannot make a reservation on an out of date workshop', 16, 1)
+		ROLLBACK TRANSACTION
+	END
+END
+
+GO
+CREATE TRIGGER t_AddingCompanyToCustomer ON dbo.Companies
+FOR INSERT
+AS
+BEGIN
+	SET NOCOUNT ON;
+	DECLARE @CustomerID int
+	SET @CustomerID = (SELECT CustomerID FROM Inserted) 
+	IF EXISTS(SELECT CustomerID FROM dbo.PrivateCustomers WHERE CustomerID = @CustomerID)
+	BEGIN
+		RAISERROR('You cannot assign company to a customer who is a private customer', 16, 1)
+		ROLLBACK TRANSACTION
+	END
+END
+
+GO
+CREATE PROC p_AddAttendee
+	@Firstname NVARCHAR(30), @Lastname NVARCHAR(30), @Email NVARCHAR(50), @Phone NVARCHAR(20), @StudentCard NVARCHAR(20)
+AS
+BEGIN
+	SET NOCOUNT ON;
+    INSERT INTO dbo.Attendees(Firstname, Lastname, Email, Phone, StudentCard)
+	VALUES (@Firstname, @Lastname, @Email, @Phone, @StudentCard)
+END
+
+GO
+CREATE PROC p_AddWorkshop
+	@Name NVARCHAR(50), @StartTime DATETIME, @EndTime DATETIME, @ConferenceID INT, @Day INT, @Price MONEY, @ParticipantsLimit INT 
+AS
+BEGIN
+	SET NOCOUNT ON;
+
+	DECLARE @ConferenceDayID int
+	SET @ConferenceDayID = (SELECT ConferenceDayID FROM dbo.ConferenceDays WHERE ConferenceID = @ConferenceID AND Day = @Day)
+	IF @ConferenceDayID IS NULL
+	BEGIN
+		RAISERROR('Conference day of such parameters does not exist.', 14, 1)
+		RETURN
+	END
+
+	INSERT INTO dbo.Workshops(Name, ConferenceDayID, StartTime, EndTime, Price, ParticipantsLimit)
+	VALUES (@Name, @ConferenceDayID, @StartTime, @EndTime, @Price, @ParticipantsLimit)
+END
+
+GO
+CREATE PROC p_AssignPlaceToWorkshop
+	@WorkshopID INT, @Location NVARCHAR(50) 
+AS
+BEGIN
+	SET NOCOUNT ON;
+	IF NOT EXISTS(SELECT @WorkshopID FROM dbo.Workshops WHERE WorkshopID = @WorkshopID) 
+	BEGIN
+		RAISERROR('Workshop of this ID does not exist.', 14, 1)
+		RETURN
+	END
+
+	UPDATE dbo.Workshops
+	SET Location = @Location 
+	WHERE WorkshopID = @WorkshopID
+END
+
+GO
+CREATE PROC p_AddAddress
+	@Street NVARCHAR(50), @City NVARCHAR(50), @ZIP NVARCHAR(10), @Country NVARCHAR(30)
+AS
+BEGIN
+	SET NOCOUNT ON;
+	INSERT INTO dbo.Address(Street, City, ZIP, Country)
+	VALUES (@Street, @City, @ZIP, @Country)
+END
+
+GO
+CREATE PROC p_AddPayment
+	@Value MONEY
+AS
+BEGIN
+	SET NOCOUNT ON;
+	INSERT INTO dbo.Payments(Value)
+	VALUES(@Value)
+END
+
+GO
+CREATE PROC p_AddStudentCard 
+	@AttendeeID INT, @StudentCard NVARCHAR(20)
+AS
+BEGIN
+	SET NOCOUNT ON;
+	IF NOT EXISTS(SELECT AttendeeID FROM dbo.Attendees WHERE AttendeeID = @AttendeeID) 
+	BEGIN
+		RAISERROR('Attendee of this ID does not exist.', 14, 1)
+		RETURN
+	END
+
+	UPDATE dbo.Attendees
+	SET StudentCard = @StudentCard
+	WHERE AttendeeID = @AttendeeID
+END
+
+GO
+CREATE PROC p_AddReservation
+	@CustomerID INT
+AS
+BEGIN
+	SET NOCOUNT ON;
+	INSERT INTO dbo.Reservations(CustomerID) 
+	VALUES (@CustomerID)
+END
+
+GO
+CREATE FUNCTION f_getAvailablePlacesConferenceDay
+	(@ConferenceDayID INT) RETURNS int 
+AS
+BEGIN
+	DECLARE @AvailablePlaces INT
+	SET @AvailablePlaces = (SELECT ParticipantsLimit 
+							FROM dbo.Conferences c
+							INNER JOIN ConferenceDays cd
+							ON cd.ConferenceID = c.ConferenceID
+							WHERE cd.ConferenceDayID = @ConferenceDayID) 
+						- (SELECT SUM(NumReservations) 
+							FROM dbo.ConferenceDayReservations 
+							WHERE ConferenceDayID = @ConferenceDayID)
+	RETURN (@AvailablePlaces)
+END
+
+GO
+CREATE PROC p_AddConferenceDayReservationToRes
+	@ReservationID INT, @ConferenceID int, @Day INT, @NumReservations INT
+AS
+BEGIN
+	DECLARE @ConferenceDayID int
+	SET @ConferenceDayID = (SELECT ConferenceDayID FROM dbo.ConferenceDays cd INNER JOIN conferences c ON c.ConferenceID = cd.ConferenceID WHERE cd.ConferenceID = @ConferenceID AND cd.Day = @Day)
+
+	IF (@ConferenceDayID IS null)
+	BEGIN
+		RAISERROR('There is no conference day of given parameters.', 14, 1)
+		RETURN
+    END
+
+	--DECLARE @AvailablePlaces int
+	--EXEC @AvailablePlaces = f_getAvailablePlacesConferenceDay @ConferenceDayID
+	--IF (@AvailablePlaces < @NumReservations)
+	--BEGIN
+	--	RAISERROR(N'There are not enough places left for this conference day. You can %s %d places.', 14, 1, N'book', @AvailablePlaces)
+	--	RETURN
+ --   END
+
+	SET NOCOUNT ON;
+	INSERT INTO dbo.ConferenceDayReservations(ReservationID, ConferenceDayID, NumReservations)
+	VALUES (@ReservationID, @ConferenceDayID, @NumReservations)
+END
+
+GO
+CREATE PROC p_AddWorkshopReservationToRes 
+	@ReservationID INT, @WorkshopID INT, @NumReservations INT 
+AS
+BEGIN
+	SET NOCOUNT ON;
+	IF NOT EXISTS (SELECT WorkshopID FROM dbo.Workshops WHERE WorkshopID = @WorkshopID)
+	BEGIN
+		RAISERROR('There is no workshop of given parameters.', 14, 1)
+		RETURN
+    END
+
+	INSERT WorkshopReservations(ReservationID, WorkshopID, NumReservations) 
+	VALUES (@ReservationID, @WorkshopID, @NumReservations)
+
+END
+
+GO
+CREATE TRIGGER t_AddingReservationForOutOfDateConfDay ON dbo.ConferenceDayReservations
+FOR INSERT
+AS
+BEGIN
+	SET NOCOUNT ON;
+	DECLARE @ReservationDate DATE
+	DECLARE @ConferenceDayDate DATE
+	DECLARE @ReservationID INT 
+	DECLARE @ConferenceDayID INT 
+	DECLARE @ConferenceID INT
+
+	SET @ReservationID = (SELECT ReservationID FROM Inserted)
+	SET @ConferenceDayID = (SELECT ConferenceDayID FROM Inserted)
+	SET @ReservationDate = (SELECT Date FROM dbo.Reservations WHERE ReservationID = @ReservationID)
+	SET @ConferenceID = (SELECT ConferenceID FROM dbo.ConferenceDays WHERE ConferenceDayID = @ConferenceDayID)
+	SET @ConferenceDayDate = (SELECT StartDate FROM dbo.Conferences WHERE ConferenceID = @ConferenceID)
+
+	IF (@ReservationDate > @ConferenceDayDate)
+	BEGIN
+		RAISERROR('You cannot make a reservation on an out of date conference day', 16, 1)
+		ROLLBACK TRANSACTION
+	END
+END
+
+GO
+CREATE PROC p_MostActiveCustomers
+AS
+BEGIN
+	SELECT  tab.id, tab.CustomerName, COUNT(r.ReservationID) AS Sum
+	FROM (SELECT co.CustomerID id, co.CompanyName CustomerName FROM Companies co
+			UNION 
+			SELECT pc.CustomerID id, Firstname + ' ' + Lastname CustomerName FROM PrivateCustomers pc) AS tab
+	LEFT JOIN dbo.Reservations r
+	ON r.CustomerID = tab.id
+	WHERE r.IsCancelled = 0 OR r.IsCancelled IS NULL
+	GROUP BY tab.CustomerName, tab.id
+	ORDER BY Sum DESC
+END
+
+GO
+CREATE FUNCTION f_GetAvailablePlacesWorkshop
+	(@WorkshopID INT) RETURNS int
+AS
+BEGIN
+	DECLARE @AvailablePlaces INT
+	SET @AvailablePlaces = (SELECT w.ParticipantsLimit 
+							FROM dbo.Workshops w
+							WHERE w.WorkshopID = @WorkshopID)
+							- (SELECT SUM(NumReservations) 
+							FROM dbo.WorkshopReservations wr
+							WHERE wr.WorkshopID = @WorkshopID)
+	RETURN (@AvailablePlaces)
+END
+
+GO
+CREATE FUNCTION f_GetIDOfAnIthWorkshop
+	(@i INT, @ConferenceDayID INT) RETURNS INT
+AS
+BEGIN	
+	DECLARE @Result INT 
+	SET @Result = (SELECT TOP 1 tab1.WorkshopID 
+	FROM dbo.Workshops w1 
+	INNER JOIN (SELECT TOP (@i) * FROM dbo.Workshops w2 WHERE ConferenceDayID = @ConferenceDayID ORDER BY w2.WorkshopID) AS tab1 
+	ON w1.WorkshopID = tab1.WorkshopID ORDER BY tab1.WorkshopID DESC)
+	RETURN @Result
+END
+
+
+GO
 INSERT Address (Street, City, ZIP, Country) VALUES ('Second 37','Frankfort',789151,'Malaysia');
 INSERT Address (Street, City, ZIP, Country) VALUES ('Hague 96','South Fulton',976535,'Nepal');
 INSERT Address (Street, City, ZIP, Country) VALUES ('Green Nobel 24','Lukachukai',673113,'Guinea');
@@ -27094,3 +27691,4 @@ INSERT WorkshopRegistrations (ConferenceDayReservationID, WorkshopReservationID,
 INSERT WorkshopRegistrations (ConferenceDayReservationID, WorkshopReservationID, AttendeeID) VALUES (999,1597,3617);
 INSERT WorkshopRegistrations (ConferenceDayReservationID, WorkshopReservationID, AttendeeID) VALUES (1000,1598,4215);
 INSERT WorkshopRegistrations (ConferenceDayReservationID, WorkshopReservationID, AttendeeID) VALUES (1000,1598,4214);
+
